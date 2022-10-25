@@ -11,6 +11,10 @@ I got this idea from Luca Camarda's original blog and python script: https://luc
 
 Please review the code and the JSON output if you are intend to use the json output against the production environment.
 
+Modify Global manager connection information:
+- session.auth = ('username', 'password')
+- gm_nsx_mgr = 'https://[FQDN/IP]'
+
 Tested in:
 - NSX-T 3.2.1
 - Python3
