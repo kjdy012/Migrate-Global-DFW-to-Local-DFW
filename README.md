@@ -1,6 +1,10 @@
 # Migrate-Global-DFW-to-Local-DFW
 
-This python script pulls Global Manager's DFW policy (Groups, Services, ContextProfile, Policy & Rules). Then it creates a single JSON file for a Local manager in case of situation where you would like to offboard a LM from the GM, but still have the security policy in place for the LM.
+This python script pulls a NSX-T Global Manager's DFW policy (Groups, Services, ContextProfile, Policy & Rules), then it creates a single JSON file to run against the Local manager in case of situation where you would like to offboard LM from the GM, but still have the security policy in place for LM. Script does not change anything to the environment. It only uses API calls to get the GM objects.
+
+This json output can be used as a PATCH API call on the LM: ['https://{LM/NSXT_mgr}/policy/api/v1/infra']
+
+This is possible through NSX-T's policy driven API. You can find more information on the NSX hierarchical API here: https://blogs.vmware.com/networkvirtualization/2020/06/navigating-nsxt-policy-apis.html/
 
 I got this idea from Luca Camarda's original blog and python script: https://lucacamarda.wordpress.com/2020/08/20/exporting-the-nsx-t-dfw-configuration-via-the-policy-api/
 
