@@ -1,12 +1,11 @@
 import json
 import requests
 
-#prepare the http connection to NSX Manager
+#prepare the http connection to Global NSX Manager
 session = requests.Session()
 session.verify = False
 session.auth = ('admin', 'VMware1!VMware1!')
 gm_nsx_mgr = 'https://gm-paris.corp.local'
-lm_nsx_mgr = 'https://lm-paris.corp.local'
 
 #collect Services Inventory
 services_path = '/global-manager/api/v1/global-infra?filter=Type-Service'
@@ -33,10 +32,13 @@ while profiles_json["children"]:
     if childprofile["PolicyContextProfile"]["_system_owned"] == False:
         user_defined_profiles.append(childprofile)
 
-#Collect DFW configuration
+#Collect Groups and DFW Security Policies in Global Manager
 dfw_path = '/global-manager/api/v1/global-infra?type_filter=Group;SecurityPolicy'
 dfw_json = session.get(gm_nsx_mgr + dfw_path).json()
 
+#filter the user defined policies and groups and store them in the user_defined_policies
+#global DFW default policy is NOT a system defined policy, instead it is user 'admin' created policy
+#because both Groups and Security Policies are under Domain's children list, if and elif is used to filter theDefault policy
 user_defined_policies = []
 
 for x in dfw_json["children"][0]["Domain"]["children"]:
@@ -45,7 +47,7 @@ for x in dfw_json["children"][0]["Domain"]["children"]:
 	elif x[(list(x.keys())[0])]["_system_owned"] == False:
 		user_defined_policies.append(x)
 
-#Add User-Defined Services and Profiles to the DFW Configuration
+#create a new json for Local Manager with user defined policies + services + profiles
 new_infra = {
 	"resource_type": "Infra",
 	"children": [
@@ -62,6 +64,7 @@ new_infra = {
 
 new_infra["children"] += user_defined_services + user_defined_profiles
 
+#because the objects pulled from global manager has a path 'global-infra', we are replacing it to 'infra' in their path
 new_infra = json.loads(json.dumps(new_infra).replace('global-infra', 'infra'))
 
 #Write the DFW Configuration to a JSON file that can be applied via a PATCH API call to the infra URI: '/policy/api/v1/infra'
