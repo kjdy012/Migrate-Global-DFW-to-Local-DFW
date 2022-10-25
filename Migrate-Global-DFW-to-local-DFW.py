@@ -7,30 +7,17 @@ session.verify = False
 session.auth = ('admin', 'VMware1!VMware1!')
 gm_nsx_mgr = 'https://gm-paris.corp.local'
 
-#collect Services Inventory
-services_path = '/global-manager/api/v1/global-infra?filter=Type-Service'
-services_json = session.get(gm_nsx_mgr + services_path).json()
+#collect Services and ContextProfile Inventory
+svcNprofile_path = '/global-manager/api/v1/global-infra?type_filter=Service;PolicyContextProfile'
+svcNprofile_json = session.get(gm_nsx_mgr + svcNprofile_path).json()
 
-#filter the user defined services only and store them in the user_defined_services list
-user_defined_services = []
+#filter the user defined services only and store them in the user_defined_svcNprofile list
+user_defined_svcNprofile = []
 
-while services_json["children"]:
-    childservice = services_json["children"].pop()
-    if childservice["Service"]["_system_owned"] == False:
-        del childservice["Service"]["children"] #This looks to be needed because the retrieved JSON have unexpected child objects for the Service Objects
-        user_defined_services.append(childservice)
-
-#collect Profiles Inventory
-profiles_path = '/global-manager/api/v1/global-infra?filter=Type-PolicyContextProfile'
-profiles_json = session.get(gm_nsx_mgr + profiles_path).json()
-
-#filter the user defined profiles only and store them in the user_defined_profiles list
-user_defined_profiles = []
-
-while profiles_json["children"]:
-    childprofile = profiles_json["children"].pop()
-    if childprofile["PolicyContextProfile"]["_system_owned"] == False:
-        user_defined_profiles.append(childprofile)
+while svcNprofile_json["children"]:
+    childsvcNprofile = svcNprofile_json["children"].pop()
+    if childsvcNprofile[(list(childsvcNprofile.keys())[0])]["_system_owned"] == False:
+        user_defined_svcNprofile.append(childsvcNprofile)
 
 #Collect Groups and DFW Security Policies in Global Manager
 dfw_path = '/global-manager/api/v1/global-infra?type_filter=Group;SecurityPolicy'
@@ -62,7 +49,7 @@ new_infra = {
 	]
 }
 
-new_infra["children"] += user_defined_services + user_defined_profiles
+new_infra["children"] += user_defined_svcNprofile
 
 #because the objects pulled from global manager has a path 'global-infra', we are replacing it to 'infra' in their path
 new_infra = json.loads(json.dumps(new_infra).replace('global-infra', 'infra'))
